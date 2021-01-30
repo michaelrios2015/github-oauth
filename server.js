@@ -35,7 +35,7 @@ const express = require('express');
 const app = express();
 app.engine('html', ejs.renderFile);
 const path = require('path');
-const { type } = require('os');
+
 
 app.get('/', (req, res, next)=> res.render(path.join(__dirname, 'index.html'), { client_id: process.env.client_id }));
 
