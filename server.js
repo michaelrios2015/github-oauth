@@ -57,6 +57,8 @@ app.get('/api/auth', async (req, res, next)=> {
 app.get('/github/callback', async(req, res, next) => {
     try{
         //I assume this comes first and we post a request to github
+        //it comes first we are littlerly making a post request to github like we would normally to our own database??
+        //except the post request gives use a token that we then use for the next axios call
         let response = await axios.post('https://github.com/login/oauth/access_token', {
             //essentially magic
             code: req.query.code,
@@ -64,10 +66,11 @@ app.get('/github/callback', async(req, res, next) => {
             client_secret: process.env.client_secret
         }, {
             headers:{
+                //this just makes it look nicer 
                 accept: 'application/json'
             }
         })
-        //we get a response
+        //we get a response with our token which we will use to get the user
         const data = response.data;
         //something went wrong with the response
         if(data.error){
@@ -76,6 +79,7 @@ app.get('/github/callback', async(req, res, next) => {
             throw error
         }
         //we get the response again?? not sure
+        //so the post gave us the magic token and 
         response = await axios.get('https://api.github.com/user', {
             headers: {
                 authorization: `token ${ data.access_token }`
@@ -120,6 +124,8 @@ app.get('/github/callback', async(req, res, next) => {
     } 
 })
 
+
+//catch all error guy at the end
 app.use((err, req, res, next)=> {
     console.log(err);
     res.status(err.status).send({ error: err.message});
