@@ -65,7 +65,7 @@ app.get('/github/callback', async(req, res, next) => {
     try{
         //I assume this comes first and we post a request to github
         //button is pressed on index.html we are sent to github github gives us a code and
-        //this starts 
+        //this starts the proces
         let response = await axios.post('https://github.com/login/oauth/access_token', {
             //essentially magic
             code: req.query.code,
