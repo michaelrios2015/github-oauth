@@ -39,6 +39,7 @@ const path = require('path');
 
 app.get('/', (req, res, next)=> res.render(path.join(__dirname, 'index.html'), { client_id: process.env.client_id }));
 
+//this should also be stuff from the last lecture so this is what api/users/:id was 
 app.get('/api/auth', async (req, res, next)=> {
     try {
         const { id } = await jwt.verify(req.headers.authorization, process.env.JWT)
