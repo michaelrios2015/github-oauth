@@ -1,3 +1,4 @@
+//for deployment because we can't send this without reliving the secrets
 try {
     const env = require('./env');
     process.env.client_id = env.client_id;
@@ -8,11 +9,14 @@ catch(ex){
     console.log('YOU NEED ENVIORMENTS');
 }
 // console.log(process.env.client_id, process.env.client_secret);
+//out database now with jwt to make it so only you can log into the account
+//also for some reason SSL had to  be turned off in deployment...IDK
 const Sequelize = require('sequelize')
 const jwt = require('jsonwebtoken');
 const { STRING, UUID, UUIDV4, JSON } = Sequelize;
 const conn = new Sequelize(process.env.DATABASE_URL || 'postgres://postgres:JerryPine@localhost/acme_db');
 
+//normal
 const User = conn.define('user', {
     id: {
         primaryKey: true,
@@ -29,6 +33,7 @@ const User = conn.define('user', {
     }
 })
 
+//ejs lets us put some html in here??
 const ejs = require('ejs');
 const axios = require('axios');
 const express = require('express');
@@ -36,10 +41,10 @@ const app = express();
 app.engine('html', ejs.renderFile);
 const path = require('path');
 
-
+//regular index
 app.get('/', (req, res, next)=> res.render(path.join(__dirname, 'index.html'), { client_id: process.env.client_id }));
 
-//this should also be stuff from the last lecture so this is what api/users/:id was 
+//so this is getting a user but just with JWT so we are done with github authorization
 app.get('/api/auth', async (req, res, next)=> {
     try {
         const { id } = await jwt.verify(req.headers.authorization, process.env.JWT)
@@ -55,11 +60,12 @@ app.get('/api/auth', async (req, res, next)=> {
     }
 })
 
+//This is where the bulk of the work is done 
 app.get('/github/callback', async(req, res, next) => {
     try{
         //I assume this comes first and we post a request to github
-        //it comes first we are littlerly making a post request to github like we would normally to our own database??
-        //except the post request gives use a token that we then use for the next axios call
+        //button is pressed on index.html we are sent to github github gives us a code and
+        //this starts 
         let response = await axios.post('https://github.com/login/oauth/access_token', {
             //essentially magic
             code: req.query.code,
@@ -67,11 +73,10 @@ app.get('/github/callback', async(req, res, next) => {
             client_secret: process.env.client_secret
         }, {
             headers:{
-                //this just makes it look nicer 
                 accept: 'application/json'
             }
         })
-        //we get a response with our token which we will use to get the user
+        //we get a response
         const data = response.data;
         //something went wrong with the response
         if(data.error){
@@ -80,7 +85,6 @@ app.get('/github/callback', async(req, res, next) => {
             throw error
         }
         //we get the response again?? not sure
-        //so the post gave us the magic token and 
         response = await axios.get('https://api.github.com/user', {
             headers: {
                 authorization: `token ${ data.access_token }`
@@ -125,8 +129,6 @@ app.get('/github/callback', async(req, res, next) => {
     } 
 })
 
-
-//catch all error guy at the end
 app.use((err, req, res, next)=> {
     console.log(err);
     res.status(err.status).send({ error: err.message});
